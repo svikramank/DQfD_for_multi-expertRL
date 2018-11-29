@@ -6,7 +6,7 @@ It also compared DQdD with Double DQN on the CartPole game, and the comparation 
 
 ## Comparation DQfD trained using multiple experts with Double DQN
 
-![figure_1](/DQfD_for_multi-expertRL/plots/newplots/plt1.png)
+![figure_1](/plots/newplots/plt1.png)
 
 At the end of training, the epsilion used in greedy_action is 0.1, and thats the reason why the curves is not so stable.
 
