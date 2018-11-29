@@ -56,26 +56,10 @@ class DQfDDDQN:
         print('pre-training ...')
         for i in range(self.config.PRETRAIN_STEPS):
             if i % 200 == 0:
-                print i, 'th step of pre-trianing ...'
+                print(i, 'th step of pre-trianing ...')
             self.train_Q_network(pre_train=True)
         self.time_step = 0
-        print 'pre-train finish ...'
-
-    # TODO: How to add the variable created in tf.layers.dense to the customed collection？
-    # def build_layers(self, state, collections, units_1, units_2, w_i, b_i, regularizer=None):
-    #     with tf.variable_scope('dese1'):
-    #         dense1 = tf.layers.dense(tf.contrib.layers.flatten(state), activation=tf.nn.relu, units=units_1,
-    #                                  kernel_initializer=w_i, bias_initializer=b_i,
-    #                                  kernel_regularizer=regularizer, bias_regularizer=regularizer)
-    #     with tf.variable_scope('dens2'):
-    #         dense2 = tf.layers.dense(dense1, activation=tf.nn.relu, units=units_2,
-    #                                  kernel_initializer=w_i, bias_initializer=b_i,
-    #                                  kernel_regularizer=regularizer, bias_regularizer=regularizer)
-    #     with tf.variable_scope('dene3'):
-    #         dense3 = tf.layers.dense(dense2, activation=tf.nn.relu, units=self.action_dim,
-    #                                  kernel_initializer=w_i, bias_initializer=b_i,
-    #                                  kernel_regularizer=regularizer, bias_regularizer=regularizer)
-    #     return dense3
+        print('pre-train finish ...')
 
     def build_layers(self, state, c_names, units_1, units_2, w_i, b_i, reg=None):
         with tf.variable_scope('l1'):
@@ -98,7 +82,7 @@ class DQfDDDQN:
             c_names = ['select_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
             w_i = tf.random_uniform_initializer(-0.1, 0.1)
             b_i = tf.constant_initializer(0.1)
-            regularizer = tf.contrib.layers.l2_regularizer(scale=0.2)  # 注意：只有select网络有l2正则化
+            regularizer = tf.contrib.layers.l2_regularizer(scale=0.2)  
             result = self.build_layers(self.select_input, c_names, 24, 24, w_i, b_i, regularizer)
             return result
 
@@ -138,7 +122,7 @@ class DQfDDDQN:
     @lazy_property
     def optimize(self):
         optimizer = tf.train.AdamOptimizer(self.config.LEARNING_RATE)
-        return optimizer.minimize(self.loss)  # optimizer只更新selese_network中的参数
+        return optimizer.minimize(self.loss)  # optimizer
 
     @lazy_property
     def update_target_net(self):
@@ -154,9 +138,8 @@ class DQfDDDQN:
         print("Model restored.")
 
     def perceive(self, state, action, reward, next_state, done, demo):
-        # epsilon是不断变小的，也就是随机性不断变小:开始需要更多的探索，所以动作偏随机，之后需要动作能够有效，因此减少随机。
-        self.epsilon = max(self.config.FINAL_EPSILON, self.epsilon * self.config.EPSILIN_DECAY)
-        self.replay_buffer.append((state, action, reward, next_state, done, demo))  # 经验池添加
+        self.epsilon = max(self.config.FINAL_EPSILON, self.epsilon * self.config.EPSILON_DECAY)
+        self.replay_buffer.append((state, action, reward, next_state, done, demo)) 
 
     def train_Q_network(self, pre_train=False, update=True):
         """
@@ -166,10 +149,11 @@ class DQfDDDQN:
         if not pre_train and len(self.replay_buffer) < self.config.START_TRAINING:
             return
         self.time_step += 1
-        # 经验池随机采样minibatch
         minibatch = []
         if pre_train:
-            minibatch = random.sample(self.demo_buffer, self.config.BATCH_SIZE)
+            # print("type of expert data:", type(self.demo_buffer))
+            # print("Some expert data:", (self.demo_buffer)[0])
+            minibatch = random.sample(list(self.demo_buffer), self.config.BATCH_SIZE)
         elif self.demo_mode == 'get_demo':
             minibatch = random.sample(self.replay_buffer, self.config.BATCH_SIZE)
         elif self.demo_mode == 'use_demo':
@@ -187,7 +171,6 @@ class DQfDDDQN:
         done = [data[4] for data in minibatch]
         demo_data = [data[5] for data in minibatch]
 
-        # 提供给placeholder，因此需要先计算出
         Q_select = self.Q_select.eval(feed_dict={self.select_input: next_state_batch})
         Q_eval = self.Q_eval.eval(feed_dict={self.eval_input: next_state_batch})
 
@@ -198,17 +181,17 @@ class DQfDDDQN:
         for i in range(0, self.config.BATCH_SIZE):
             temp = self.Q_select.eval(feed_dict={self.select_input: state_batch[i].reshape((-1, self.state_dim))})[0]
             action = np.argmax(Q_select[i])
-            temp[action_batch[i]] = reward_batch[i] + (1 - done[i]) * self.config.GAMMA * Q_eval[i][action]
+            temp[int(action_batch[i])] = int(reward_batch[i]) + (1 - done[i]) * self.config.GAMMA * Q_eval[i][action]
             y_batch[i] = temp
 
-        # 新产生的样本输入
+        
         self.sess.run(self.optimize, feed_dict={
             self.y_input: y_batch,
             self.select_input: state_batch,
             self.action_batch: action_batch,
             self.isdemo: demo_data
         })
-        # 此例中一局步数有限，因此可以外部控制一局结束后update ，update为false时在外部控制
+
         if update and self.time_step % self.config.UPDATE_TARGET_NET == 0:
             self.sess.run(self.update_target_net)
 
@@ -216,3 +199,68 @@ class DQfDDDQN:
         if random.random() <= self.epsilon:
             return random.randint(0, self.action_dim - 1)
         return np.argmax(self.Q_select.eval(feed_dict={self.select_input: [state]})[0])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -6,7 +6,7 @@ class Config:
     GAMMA = 0.99  # discount factor for target Q
     INITIAL_EPSILON = 1.0  # starting value of epsilon
     FINAL_EPSILON = 0.01  # final value of epsilon
-    EPSILIN_DECAY = 0.999
+    EPSILON_DECAY = 0.9985
     START_TRAINING = 1000  # experience replay buffer size
     BATCH_SIZE = 64  # size of minibatch
     UPDATE_TARGET_NET = 200  # update eval_network params every 200 steps
@@ -16,7 +16,9 @@ class Config:
     LAMBDA_2 = 10e-5
     PRETRAIN_STEPS = 1000
     MODEL_PATH = './model/DQfDDDQN_model'
-    DEMO_DATA_PATH = '/Users/mahailong/DQfD/demo.p'
+    DEMO_DATA_PATH_1 = '/Users/vikramanksingh/Desktop/DQfD/demo/DDQN_demo.p'
+    DEMO_DATA_PATH_2 = '/Users/vikramanksingh/Desktop/DQfD/demo/AC_demo.p'
+    DEMO_DATA_PATH_3 = '/Users/vikramanksingh/Desktop/DQfD/demo/PG_demo.p'
 
     replay_buffer_size = 2000
     demo_buffer_size = 500 * 50
